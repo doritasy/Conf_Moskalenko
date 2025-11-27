@@ -20,10 +20,24 @@ class ConfigParser:
 
     def remove_comments(self, text: str) -> str:
         # Сначала удаляем многострочные комментарии
-        text = self.multi_line_comment.sub('', text)
+        text = self.big_comment.sub('', text)
         # Затем удаляем однострочные комментарии
-        text = self.single_line_comment.sub('', text)
+        text = self.one_line_comment.sub('', text)
         return text
+
+    def parse_number(self, num_str: str) -> float:
+        num_str = num_str.strip()
+        if self.number.match(num_str):
+            return int(num_str, 16)
+        try:
+            return float(num_str)
+        exept ValueError:
+            return 0.0
+    def parse_string(self, string_str: str) -> str:
+        match = self.string.search(string_str)
+        if match:
+            return match.group(1)
+        return string_str.strip()
 
 if __name__ == "__main__":
     parser = ConfigParser()
