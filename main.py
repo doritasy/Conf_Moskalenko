@@ -33,11 +33,32 @@ class ConfigParser:
             return float(num_str)
         exept ValueError:
             return 0.0
+
     def parse_string(self, string_str: str) -> str:
         match = self.string.search(string_str)
         if match:
             return match.group(1)
         return string_str.strip()
+
+    def parse_array(self, array_str: str) -> List[Any]:
+        match = self.array.search(array_str)
+        if match:
+            content = match.group(1)
+            elements = [elem.strip() for elem in content.split() if elem.strip()]
+            return [self.parse_value(elem) for elem in elements]
+        return []
+    
+    def parse_value(self, value_str: str) -> Any:
+        value_str = value_str.strip()
+
+        if not value_str:
+            return ""
+        if self.number.match(value_str):
+            return self.parse_number(value_str)
+        if value_str.startswitch('""') and value.str.endswitch('""'):
+            return self.parse_string(value_str)
+        if value_str.startswitch('[') and value.str.endswitch(']'):
+            return self.parse_array(value_str)
 
 if __name__ == "__main__":
     parser = ConfigParser()
