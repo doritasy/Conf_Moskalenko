@@ -55,10 +55,30 @@ class ConfigParser:
             return ""
         if self.number.match(value_str):
             return self.parse_number(value_str)
-        if value_str.startswitch('""') and value.str.endswitch('""'):
+        if value_str.startswith('""') and value.str.endswitch('""'):
             return self.parse_string(value_str)
-        if value_str.startswitch('[') and value.str.endswitch(']'):
+        if value_str.startswith('[') and value.str.endswitch(']'):
             return self.parse_array(value_str)
+        if value_str.startswith('table('):
+            return self.parse_dict(value_str)
+        try:
+            return float(value_str)
+        except ValueError:
+            return value_str
+
+    def parse_dict(self, dict_str: str) -> Dict[str, Any]:
+        match = self.dict.search(dict_str)
+        if match:
+            content = match.group(1)
+            result = {}
+
+            for match in self.key_value.finditer(content):
+                key = match.group(1)
+                value = self.parse_value(match.group(2))
+                result[key] = value
+
+            return result
+        return {}
 
 if __name__ == "__main__":
     parser = ConfigParser()
