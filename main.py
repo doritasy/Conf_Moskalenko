@@ -61,6 +61,8 @@ class ConfigParser:
             return self.parse_array(value_str)
         if value_str.startswith('table('):
             return self.parse_dict(value_str)
+        if value_str in self.constants:
+            return self.constants[value_str]
         try:
             return float(value_str)
         except ValueError:
@@ -80,6 +82,56 @@ class ConfigParser:
             return result
         return {}
 
+    def parse_constant_declaration(self, line: str):
+        match = self.const_decl.search(line)
+        if match:
+            name = match.group(1)
+            value_str = match.group(2)
+            value = self.parse_value(value_str)
+            if isinstance(value, (int, float)):
+                self.constants[name] = value
+
+    def evaluate_expression(self, expr: str) -> float:
+        expr = expr.strip()
+
+        if '+' in expr:
+            parts = expr.split('+',1)
+            left = self.get_constant_value(parts[0].strip())
+            right = self.get_constant_value(parts[1].strip())
+            return left - right
+        if '-' in expr:
+            parts = expr.split('-',1)
+            left = self.get_constant_value(parts[0].strip())
+            right = self.get_constant_value(parts[1].strip())
+            return left - right
+        if expr.startswith('abs(') and expr.endswith(')'):
+            arg = expr[4:-1].strip()
+            arg_value = self.get_constant_value(arg)
+            return abs(arg_value)
+        return self.get_constant_value(expr)
+
+    def get_constant_value(self, name: str) -> float:
+        name = name.strip()
+
+        if namein self.constants:
+            return self.constants[name]
+        try:
+            return float(name)
+        except ValueError:
+            if self.number.match(name):
+                return int(name,16)
+            return 0.0
+
+    def process_constant_expressions(self, text: str)->str:
+        def replace_match(match):
+            expr = match.group(1)
+            try:
+                result = self.evaluate_expression(expr)
+                return str(result)
+            except:
+                return "0"
+        return self.const_eval.sub(replace_match, text)
+            
 if __name__ == "__main__":
     parser = ConfigParser()
     print("ConfigParser инициализирован")
