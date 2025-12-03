@@ -131,7 +131,38 @@ class ConfigParser:
             except:
                 return "0"
         return self.const_eval.sub(replace_match, text)
-            
+
+    def to_toml_value(self, value: Any) -> str:
+        if isinstance(value, str):
+            return f'"{value}"'
+        elif isinstance(value,bool):
+            return str(value).lower()
+        elif isinstance(value, (int, float)):
+            return str(value)
+        elif isinstance(value, list):
+            elements = [self.to_toml_value(elem) for elem in value]
+            return f'[ {", ".join(elements)} ]'
+        elif isinstance(value, decit):
+            lines = []
+            for k, v in value.items():
+                lines.append(f'{k} = {self.to_toml_value(v)}')
+            return '\n'.join(lines)
+        else:
+            return '""'
+
+    def convert_to_toml(self, data: Dict[str, Any]) -> str:
+        lines = []
+
+        for key, value in data.items():
+            if isinstance(value, dict):
+                lines.append(f'[{key}]')
+                for sub_key, sub_value in value.items():
+                    lines.append(f'{sub_key} = {self.to_toml_value(sub_value)}')
+                lines.append('')
+            else:
+                lines.append(f'{key} = {self.to_toml_value(value)}')
+        return '\n'.join(lines)
+        
 if __name__ == "__main__":
     parser = ConfigParser()
     print("ConfigParser инициализирован")
