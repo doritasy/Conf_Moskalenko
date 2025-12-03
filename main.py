@@ -162,7 +162,42 @@ class ConfigParser:
             else:
                 lines.append(f'{key} = {self.to_toml_value(value)}')
         return '\n'.join(lines)
-        
+
+    def parse(self, input_text: str) -> Dict[str, Any]:
+        cleaned_text = self.remove_comments(input_text)
+
+        lines = cleaned_text.split('\n')
+        result = {}
+
+        other_lines = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            if '<-' in line:
+                self.parse_constant_declaration(line)
+            else:
+                other_lines.append(line)
+
+        for line in other_lines:
+            line = self.process_constant_expressions(line)
+            if not line.strip():
+                continue
+            if line.startswith('table('):
+                dict_data = self.parse_dict(line)
+                result.update(dict_data)
+            elif line.startswith('[') and line.endswith(']'):
+                array_data = self.parse_array(line)
+                result['array'] = array_data
+            elif '=' in line:
+                parts = line.split('=', 1)
+                if len(parts) == 2:
+                    key = parts[0].strip()
+                    value = self.parse_value(parts[1].strip())
+                    result[key] = value
+        return result
+    
 if __name__ == "__main__":
     parser = ConfigParser()
     print("ConfigParser инициализирован")
