@@ -31,7 +31,7 @@ class ConfigParser:
             return int(num_str, 16)
         try:
             return float(num_str)
-        exept ValueError:
+        except ValueError:
             return 0.0
 
     def parse_string(self, string_str: str) -> str:
@@ -113,7 +113,7 @@ class ConfigParser:
     def get_constant_value(self, name: str) -> float:
         name = name.strip()
 
-        if namein self.constants:
+        if name in self.constants:
             return self.constants[name]
         try:
             return float(name)
@@ -198,6 +198,41 @@ class ConfigParser:
                     result[key] = value
         return result
     
+def main():
+    if len(sys.argv) != 3:
+        print("Использование: python main.py <входной_файл> <выходной_файл>")
+        print("Пример: python main.py config.txt output.toml")
+        sys.exit(1)
+    
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    
+    if not Path(input_file).exists():
+        print(f"Ошибка: входной файл '{input_file}' не существует")
+        sys.exit(1)
+    
+    try:
+        print(f"Чтение входного файла: {input_file}")
+        with open(input_file, 'r', encoding='utf-8') as f:
+            input_content = f.read()
+        
+        parser = ConfigParser()
+        parsed_data = parser.parse(input_content)
+        
+        toml_output = parser.convert_to_toml(parsed_data)
+        
+        print(f"Запись результата в файл: {output_file}")
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(toml_output)
+        
+        print(f"Конфигурация успешно преобразована:")
+        print(f"Вход:  {input_file}")
+        print(f"Выход: {output_file}")
+        
+    except Exception as e:
+        print(f"Ошибка при обработке файлов: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    parser = ConfigParser()
-    print("ConfigParser инициализирован")
+    main()
