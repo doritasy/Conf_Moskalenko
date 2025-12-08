@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
+
 import re
 import sys
-import math
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any
 from pathlib import Path
 
 class ConfigParser:
@@ -9,19 +10,17 @@ class ConfigParser:
         self.constans: Dict[str, float] = {}
 
         self.one_line_comment = re.compile(r'\|\|.*')
-        self.big_comment = re.compile(r'<!--.*?-->', re.DOTALL)  # Многострочные комментарии
-        self.number = re.compile(r'0[xX][0-9a-fA-F]+')  # Шестнадцатеричные числа
-        self.array = re.compile(r'\[\s*(.*?)\s*\]')  # Массивы
-        self.dict = re.compile(r'table\(\s*(.*?)\s*\)', re.DOTALL)  # Словари
-        self.key_value = re.compile(r'([a-zA-Z][a-zA-Z0-9]*)\s*=>\s*(.*?)(?:,|$)')  # Пары ключ-значение
-        self.string = re.compile(r'"([^"]*)"')  # Строки в кавычках
-        self.const_decl = re.compile(r'([a-zA-Z][a-zA-Z0-9]*)\s*<-\s*(.*?);')  # Объявления констант
-        self.const_eval = re.compile(r'!\{(.+?)\}')  # Вычисления констант
+        self.big_comment = re.compile(r'<!--.*?-->', re.DOTALL)
+        self.number = re.compile(r'0[xX][0-9a-fA-F]+')
+        self.array = re.compile(r'\[\s*(.*?)\s*\]')
+        self.dict = re.compile(r'table\(\s*(.*?)\s*\)', re.DOTALL)
+        self.key_value = re.compile(r'([a-zA-Z][a-zA-Z0-9]*)\s*=>\s*(.*?)(?:,|$)')
+        self.string = re.compile(r'"([^"]*)"')
+        self.const_decl = re.compile(r'([a-zA-Z][a-zA-Z0-9]*)\s*<-\s*(.*?);')
+        self.const_eval = re.compile(r'!\{(.+?)\}')
 
     def remove_comments(self, text: str) -> str:
-        # Сначала удаляем многострочные комментарии
         text = self.big_comment.sub('', text)
-        # Затем удаляем однострочные комментарии
         text = self.one_line_comment.sub('', text)
         return text
 
@@ -55,14 +54,14 @@ class ConfigParser:
             return ""
         if self.number.match(value_str):
             return self.parse_number(value_str)
-        if value_str.startswith('""') and value.str.endswitch('""'):
+        if value_str.startswith('"') and value_str.endswith('"'):
             return self.parse_string(value_str)
-        if value_str.startswith('[') and value.str.endswitch(']'):
+        if value_str.startswith('[') and value_str.endswith(']'):
             return self.parse_array(value_str)
         if value_str.startswith('table('):
             return self.parse_dict(value_str)
-        if value_str in self.constants:
-            return self.constants[value_str]
+        if value_str in self.constans:
+            return self.constans[value_str]
         try:
             return float(value_str)
         except ValueError:
@@ -89,18 +88,18 @@ class ConfigParser:
             value_str = match.group(2)
             value = self.parse_value(value_str)
             if isinstance(value, (int, float)):
-                self.constants[name] = value
+                self.constans[name] = value
 
     def evaluate_expression(self, expr: str) -> float:
         expr = expr.strip()
 
         if '+' in expr:
-            parts = expr.split('+',1)
+            parts = expr.split('+', 1)
             left = self.get_constant_value(parts[0].strip())
             right = self.get_constant_value(parts[1].strip())
-            return left - right
+            return left + right
         if '-' in expr:
-            parts = expr.split('-',1)
+            parts = expr.split('-', 1)
             left = self.get_constant_value(parts[0].strip())
             right = self.get_constant_value(parts[1].strip())
             return left - right
@@ -113,16 +112,16 @@ class ConfigParser:
     def get_constant_value(self, name: str) -> float:
         name = name.strip()
 
-        if name in self.constants:
-            return self.constants[name]
+        if name in self.constans:
+            return self.constans[name]
         try:
             return float(name)
         except ValueError:
             if self.number.match(name):
-                return int(name,16)
+                return int(name, 16)
             return 0.0
 
-    def process_constant_expressions(self, text: str)->str:
+    def process_constant_expressions(self, text: str) -> str:
         def replace_match(match):
             expr = match.group(1)
             try:
@@ -135,14 +134,14 @@ class ConfigParser:
     def to_toml_value(self, value: Any) -> str:
         if isinstance(value, str):
             return f'"{value}"'
-        elif isinstance(value,bool):
+        elif isinstance(value, bool):
             return str(value).lower()
         elif isinstance(value, (int, float)):
             return str(value)
         elif isinstance(value, list):
             elements = [self.to_toml_value(elem) for elem in value]
             return f'[ {", ".join(elements)} ]'
-        elif isinstance(value, decit):
+        elif isinstance(value, dict):
             lines = []
             for k, v in value.items():
                 lines.append(f'{k} = {self.to_toml_value(v)}')
